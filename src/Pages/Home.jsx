@@ -80,7 +80,7 @@ const Home = () => {
             Ready to explore more?
           </h2>
           <p className="mt-2 text-gray-600">
-            Sign up now and start your personalized learning journey.
+            Sign up now and start your personalized learning journey Today!!.
           </p>
           <Link
             to="/register"
@@ -95,3 +95,6 @@ const Home = () => {
 };
 
 export default Home;
+
+
+
