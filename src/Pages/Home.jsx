@@ -15,8 +15,9 @@ const Home = () => {
             learning, empower students, and support underprivileged learners
             across the country.
           </p>
-          <div>Shakil</div>
-          <div>Maruf</div>
+          <div>
+            Shakil
+          </div>
           <div className="mt-8 space-x-4">
             <Link
               to="/videos"
