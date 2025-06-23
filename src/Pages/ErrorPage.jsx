@@ -14,7 +14,7 @@ const ErrorPage = () => {
           Oops! The page you're looking for doesn't exist.
         </p>
         <p className="text-lg text-gray-600">
-          It seems you have hit a broken link or entered a wrong URL.
+          It Seems you have hit a broken link or entered a wrong URL.
         </p>
         {/* Go Back Button */}
         <button
