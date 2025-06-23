@@ -63,16 +63,6 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  // Monitor Firebase auth state
-  // useEffect(() => {
-  //   const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-  //     setUser(currentUser);
-  //     setLoading(false);
-  //   });
-
-  //   return () => unsubscribe();
-  // }, []);
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
@@ -108,9 +98,6 @@ const AuthProvider = ({ children }) => {
     setError,
   };
 
-  // return (
-  //   <AuthContext.Provider value={authInfo}>{children}</AuthContext.Provider>
-  // );
   return (
     <AuthContext.Provider value={authInfo}>
       {loading ? (
