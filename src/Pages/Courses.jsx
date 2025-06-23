@@ -17,7 +17,7 @@ const Courses = () => {
     });
   }, []);
 
-  // Load courses when category changes
+  // Load courses when category changeshttp://127.0.0.1/
   useEffect(() => {
     if (selectedCategoryId) {
       axios

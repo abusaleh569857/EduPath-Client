@@ -75,9 +75,12 @@ const AuthProvider = ({ children }) => {
           );
           if (!res.ok) throw new Error("User fetch failed");
           const data = await res.json();
+          console.log(data.first_name);
           setUserInfo(data); // Save backend user info
+          
         } catch (err) {
           console.error("Failed to fetch user info:", err.message);
+          
         }
       } else {
         setUserInfo(null);
