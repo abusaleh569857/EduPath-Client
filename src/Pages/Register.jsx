@@ -1,14 +1,22 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoEye } from "react-icons/io5";
 import { IoMdEyeOff } from "react-icons/io";
 import { AuthContext } from "../Provider/AuthProvider";
 import { motion } from "framer-motion";
 import Swal from "sweetalert2";
+
 const Register = () => {
-  const { registerUser, setError, error } = useContext(AuthContext);
+  const { registerUser, setError, error, user } = useContext(AuthContext);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
+
 
   const [formData, setFormData] = useState({
     first_name: "",
