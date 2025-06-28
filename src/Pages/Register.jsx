@@ -89,7 +89,7 @@ const Register = () => {
           confirmButtonColor: "#4f46e5",
         });
 
-        navigate("/login");
+        navigate("/dashboard");
       }
     } catch (err) {
       setError("Registration failed, please try again.");

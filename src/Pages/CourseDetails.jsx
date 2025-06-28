@@ -6,6 +6,7 @@ import { motion } from "framer-motion"
 import { Clock, Users, Star, BookOpen, Video, FileText } from "lucide-react"
 import axios from "axios"
 import { AuthContext } from "../Provider/AuthProvider"
+import CourseRecommendations from "../Components/Recommendations/CourseRecommendations"
 
 const CourseDetails = () => {
   const { id } = useParams()
@@ -14,6 +15,7 @@ const CourseDetails = () => {
   const [course, setCourse] = useState(null)
   const [isEnrolled, setIsEnrolled] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [recommendations, setRecommendations] = useState([])
 
   useEffect(() => {
     const fetchCourseDetails = async () => {
@@ -25,6 +27,14 @@ const CourseDetails = () => {
         if (user) {
           const enrollmentResponse = await axios.get(`http://localhost:5000/api/enrollment/check/${user.email}/${id}`)
           setIsEnrolled(enrollmentResponse.data.enrolled)
+
+          // Fetch course recommendations
+          if (user) {
+            const recommendationsRes = await axios.get(
+              `http://localhost:5000/api/course/recommendations/${id}/${user.email}`,
+            )
+            setRecommendations(recommendationsRes.data.recommendations || [])
+          }
         }
       } catch (error) {
         console.error("Error fetching course details:", error)
@@ -147,7 +157,7 @@ const CourseDetails = () => {
                     </div>
                     <div className="flex items-center gap-3">
                       <Users className="w-5 h-5 text-gray-500" />
-                      <span className="text-gray-700">{course.enrollment_count } students enrolled</span>
+                      <span className="text-gray-700">{course.enrollment_count} students enrolled</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Star className="w-5 h-5 text-yellow-500" />
@@ -177,6 +187,13 @@ const CourseDetails = () => {
                 </div>
               </div>
             </div>
+
+            {/* Course Recommendations */}
+            {recommendations.length > 0 && (
+              <div className="mt-12">
+                <CourseRecommendations recommendations={recommendations} title="You might also like" />
+              </div>
+            )}
           </div>
         </motion.div>
       </div>

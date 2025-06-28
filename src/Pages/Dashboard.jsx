@@ -6,6 +6,9 @@ import { motion } from "framer-motion"
 import { BookOpen, Clock, Award, TrendingUp, Play, FileText } from "lucide-react"
 import axios from "axios"
 import { AuthContext } from "../Provider/AuthProvider"
+import PointsDisplay from "../Components/Gamification/PointsDisplay"
+import AchievementsPanel from "../Components/Gamification/AchievementsPanel"
+import CourseRecommendations from "../Components/Recommendations/CourseRecommendations"
 
 const Dashboard = () => {
   const { user, userInfo } = useContext(AuthContext)
@@ -19,6 +22,13 @@ const Dashboard = () => {
     certificates: 0,
   })
   const [loading, setLoading] = useState(true)
+  const [gamificationData, setGamificationData] = useState({
+    points: 0,
+    level: 1,
+    achievements: [],
+    rank: 0,
+  })
+  const [recommendations, setRecommendations] = useState([])
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -28,10 +38,14 @@ const Dashboard = () => {
           setEnrolledCourses(response.data.courses || [])
           setStats(response.data.stats || stats)
           // Fetch invoices separately
-        const invoiceRes = await axios.get(`http://localhost:5000/api/user/invoices/${user.email}`)
-        setInvoices(invoiceRes.data.invoices || [])
+          const invoiceRes = await axios.get(`http://localhost:5000/api/user/invoices/${user.email}`)
+          setInvoices(invoiceRes.data.invoices || [])
 
-         
+          const gamificationRes = await axios.get(`http://localhost:5000/api/user/gamification/${user.email}`)
+          setGamificationData(gamificationRes.data)
+
+          const recommendationsRes = await axios.get(`http://localhost:5000/api/user/recommendations/${user.email}`)
+          setRecommendations(recommendationsRes.data.recommendations || [])
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error)
@@ -73,6 +87,9 @@ const Dashboard = () => {
             </div>
           </div>
         </motion.div>
+
+        {/* Points Display */}
+        <PointsDisplay points={gamificationData.points} level={gamificationData.level} rank={gamificationData.rank} />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -174,77 +191,86 @@ const Dashboard = () => {
                 </motion.div>
               ))}
             </div>
-
-
-
           )}
         </motion.div>
         {/* Invoices Section */}
         <motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.5, delay: 0.6 }}
-  className="bg-white rounded-2xl shadow-xl p-8 mt-8"
->
-  <h2 className="text-2xl font-bold text-gray-800 mb-6">Invoices</h2>
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="bg-white rounded-2xl shadow-xl p-8 mt-8"
+        >
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Invoices</h2>
 
-  {invoices.length === 0 ? (
-    <div className="text-center text-gray-500">No invoices found.</div>
-  ) : (
-    <div className="overflow-x-auto">
-      <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Invoice ID</th>
-            <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Amount</th>
-            <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Status</th>
-            <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Date</th>
-            <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Download</th>
-          </tr>
-        </thead>
-        <tbody>
-          {invoices.map((invoice) => (
-            <tr key={invoice.id} className="border-t border-gray-200">
-              <td className="px-6 py-4 text-sm text-gray-800">{invoice.transactionId}</td>
-              <td className="px-6 py-4 text-sm text-gray-800">
-                {Number(invoice.totalAmount).toFixed(2)} Tk
-              </td>
-              <td className="px-6 py-4 text-sm">
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    invoice.paymentStatus === "completed"
-                      ? "bg-green-100 text-green-600"
-                      : "bg-yellow-100 text-yellow-600"
-                  }`}
-                >
-                  {invoice.paymentStatus === "completed" ? "Paid" : invoice.paymentStatus}
-                </span>
-              </td>
-              <td className="px-6 py-4 text-sm text-gray-800">
-                {invoice.paymentDate
-                  ? new Date(invoice.paymentDate).toLocaleDateString()
-                  : "—"}
-              </td>
-              <td className="px-6 py-4 text-sm">
-                <a
-                  href={`/invoice/${invoice.enrollmentId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  Download
-                </a>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )}
-</motion.div>
+          {invoices.length === 0 ? (
+            <div className="text-center text-gray-500">No invoices found.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Invoice ID</th>
+                    <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Amount</th>
+                    <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Status</th>
+                    <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Date</th>
+                    <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">Download</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoices.map((invoice) => (
+                    <tr key={invoice.id} className="border-t border-gray-200">
+                      <td className="px-6 py-4 text-sm text-gray-800">{invoice.transactionId}</td>
+                      <td className="px-6 py-4 text-sm text-gray-800">{Number(invoice.totalAmount).toFixed(2)} Tk</td>
+                      <td className="px-6 py-4 text-sm">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            invoice.paymentStatus === "completed"
+                              ? "bg-green-100 text-green-600"
+                              : "bg-yellow-100 text-yellow-600"
+                          }`}
+                        >
+                          {invoice.paymentStatus === "completed" ? "Paid" : invoice.paymentStatus}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-800">
+                        {invoice.paymentDate ? new Date(invoice.paymentDate).toLocaleDateString() : "—"}
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <a
+                          href={`/invoice/${invoice.enrollmentId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          Download
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </motion.div>
+        {/* Achievements Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.7 }}
+          className="bg-white rounded-2xl shadow-xl p-8 mt-8"
+        >
+          <AchievementsPanel achievements={gamificationData.achievements} />
+        </motion.div>
 
-
-
+        {/* Course Recommendations */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.8 }}
+          className="bg-white rounded-2xl shadow-xl p-8 mt-8"
+        >
+          <CourseRecommendations recommendations={recommendations} />
+        </motion.div>
       </div>
     </div>
   )
