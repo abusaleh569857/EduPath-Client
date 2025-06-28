@@ -23,6 +23,9 @@ import PrivateRoute from "../Components/PrivateRoute"
 import AdminRoute from "../Components/AdminRoute"
 import InstructorRoute from "../Components/InstructorRoute"
 import AboutUs from "../Pages/AboutUs"
+import Leaderboard from "../Pages/Leaderboard"
+import InstructorCourseContentManager from "../Pages/InstructorCourseContentManager"
+
 
 export const router = createBrowserRouter([
   {
@@ -67,6 +70,10 @@ export const router = createBrowserRouter([
         element: <PrivateRoute>{<Profile />}</PrivateRoute>,
       },
       {
+        path: "/leaderboard",
+        element: <PrivateRoute>{<Leaderboard />}</PrivateRoute>,
+      },
+      {
         path: "/enroll/:courseId",
         element: <PrivateRoute>{<Enrollment />}</PrivateRoute>,
       },
@@ -109,6 +116,11 @@ export const router = createBrowserRouter([
         path: "/instructor/create-course",
         element: <InstructorRoute>{<CreateCourse />}</InstructorRoute>,
       },
+      {
+        path: "/instructor/course-content",
+        element: <InstructorRoute>{<InstructorCourseContentManager />}</InstructorRoute>,
+      }
+      
     ],
   },
 ])

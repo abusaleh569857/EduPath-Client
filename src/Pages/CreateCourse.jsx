@@ -42,10 +42,12 @@ const CreateCourse = () => {
           content_text: "",
           duration_minutes: 0,
           is_preview: false,
-        },
+        }
       ],
     },
   ])
+  const modulesArray = [...modules];
+
 
   useEffect(() => {
     fetchCategories()
@@ -161,9 +163,9 @@ const CreateCourse = () => {
       }
 
       // Add modules and lessons
-      formData.append("modules", JSON.stringify(modules))
+      formData.append("modules", JSON.stringify(modules));
       formData.append("approval_status", isDraft ? "draft" : "pending")
-      formData.append("modules", JSON.stringify(modulesArray)) 
+      // formData.append("modules", JSON.stringify(modulesArray)) 
 
       const response = await axios.post("http://localhost:5000/api/instructor/courses", formData, {
         headers: {

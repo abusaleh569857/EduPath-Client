@@ -32,6 +32,9 @@ const AdminDashboard = () => {
   const [pendingCourses, setPendingCourses] = useState([])
   const [loading, setLoading] = useState(true)
 
+  // State for viewing course details modal
+  const [viewingCourse, setViewingCourse] = useState(null)
+
   useEffect(() => {
     console.log("Current user in AdminDashboard:", user)
     fetchDashboardData()
@@ -97,6 +100,19 @@ const AdminDashboard = () => {
       console.error(`Error ${action} course:`, error)
     }
   }
+
+  // Optional: If you want to fetch fresh details on view
+  // const handleViewCourse = async (courseId) => {
+  //   try {
+  //     const token = await user.getIdToken(true)
+  //     const response = await axios.get(`http://localhost:5000/api/admin/courses/${courseId}`, {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     })
+  //     setViewingCourse(response.data)
+  //   } catch (error) {
+  //     console.error("Error fetching course details:", error)
+  //   }
+  // }
 
   if (loading) {
     return (
@@ -212,7 +228,7 @@ const AdminDashboard = () => {
                         >
                           <XCircle className="w-4 h-4" />
                         </button>
-                        <button className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition">
+                        <button className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition" title="View Details">
                           <Eye className="w-4 h-4" />
                         </button>
                       </div>
@@ -242,7 +258,7 @@ const AdminDashboard = () => {
                 <p className="text-gray-500 text-center py-8">No pending courses</p>
               ) : (
                 pendingCourses.slice(0, 5).map((course) => (
-                  <div key={course.course_id} className="border border-gray-200 rounded-lg p-4">
+                  <div key={course.CourseID} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-800">{course.title}</h3>
@@ -254,20 +270,24 @@ const AdminDashboard = () => {
                       </div>
                       <div className="flex gap-2 ml-4">
                         <button
-                          onClick={() => handleCourseAction(course.course_id, "approve")}
+                          onClick={() => handleCourseAction(course.CourseID, "approve")}
                           className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition"
                           title="Approve"
                         >
                           <CheckCircle className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleCourseAction(course.course_id, "reject")}
+                          onClick={() => handleCourseAction(course.CourseID, "reject")}
                           className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition"
                           title="Reject"
                         >
                           <XCircle className="w-4 h-4" />
                         </button>
-                        <button className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition">
+                        <button
+                          onClick={() => setViewingCourse(course)}
+                          className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition"
+                          title="View Details"
+                        >
                           <Eye className="w-4 h-4" />
                         </button>
                       </div>
@@ -306,6 +326,97 @@ const AdminDashboard = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Modal for viewing course details */}
+      {viewingCourse && (
+  <div
+    className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
+    onClick={() => setViewingCourse(null)}
+  >
+    <div
+      className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-8 relative"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Close Button */}
+      <button
+        onClick={() => setViewingCourse(null)}
+        aria-label="Close modal"
+        className="absolute top-5 right-5 text-gray-400 hover:text-gray-700 transition"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      {/* Course Header */}
+      <div className="flex flex-col md:flex-row md:items-center gap-6 mb-6">
+        <img
+          src={viewingCourse.ImageURL}
+          alt={viewingCourse.Title}
+          className="w-full md:w-48 rounded-lg object-cover shadow-md"
+        />
+        <div className="flex-1">
+          <h2 className="text-3xl font-extrabold text-gray-900 mb-1">{viewingCourse.Title}</h2>
+          <p className="text-gray-600 text-sm uppercase tracking-wide font-semibold mb-2">{viewingCourse.level} level | {viewingCourse.language}</p>
+          <p className="text-gray-700 text-base">{viewingCourse.short_description || "No short description available."}</p>
+        </div>
+      </div>
+
+      {/* Course Info Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2 border-b border-gray-200 pb-1">Course Details</h3>
+          <ul className="text-gray-700 space-y-2 text-sm">
+            <li><strong>Duration:</strong> {viewingCourse.Duration || "N/A"}</li>
+            <li><strong>Total Lessons:</strong> {viewingCourse.total_lessons}</li>
+            <li><strong>Total Duration:</strong> {viewingCourse.total_duration_minutes} minutes</li>
+            <li><strong>Category ID:</strong> {viewingCourse.CategoryID}</li>
+            <li><strong>Price:</strong> {viewingCourse.currency} {viewingCourse.discount_price ?? viewingCourse.price}</li>
+            <li><strong>Enrollment Count:</strong> {viewingCourse.enrollment_count}</li>
+            <li><strong>Rating:</strong> {viewingCourse.rating} ({viewingCourse.review_count} reviews)</li>
+            <li><strong>Prerequisites:</strong> {viewingCourse.prerequisites || "None"}</li>
+            <li><strong>Learning Outcomes:</strong> {viewingCourse.learning_outcomes || "Not specified"}</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2 border-b border-gray-200 pb-1">Instructor & Status</h3>
+          <ul className="text-gray-700 space-y-2 text-sm">
+            <li><strong>Instructor:</strong> {viewingCourse.instructor_name}</li>
+            <li><strong>Approval Status:</strong> <span className={`font-semibold ${
+              viewingCourse.approval_status === "pending"
+                ? "text-yellow-600"
+                : viewingCourse.approval_status === "approved"
+                ? "text-green-600"
+                : "text-red-600"
+            }`}>{viewingCourse.approval_status}</span></li>
+            <li><strong>Submitted At:</strong> {new Date(viewingCourse.submitted_at).toLocaleString()}</li>
+            <li><strong>Approved At:</strong> {viewingCourse.approved_at ? new Date(viewingCourse.approved_at).toLocaleString() : "Not approved"}</li>
+            <li><strong>Rejected Reason:</strong> {viewingCourse.rejection_reason || "None"}</li>
+            <li><strong>Created At:</strong> {new Date(viewingCourse.created_at).toLocaleString()}</li>
+            <li><strong>Updated At:</strong> {new Date(viewingCourse.updated_at).toLocaleString()}</li>
+            <li><strong>Slug:</strong> {viewingCourse.slug}</li>
+            <li><strong>Featured:</strong> {viewingCourse.is_featured ? "Yes" : "No"}</li>
+            <li><strong>Published:</strong> {viewingCourse.is_published ? "Yes" : "No"}</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Description Section */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-800 mb-2 border-b border-gray-200 pb-1">Full Description</h3>
+        <p className="text-gray-700 whitespace-pre-wrap">{viewingCourse.Description || "No description available."}</p>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   )
 }

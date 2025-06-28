@@ -36,7 +36,7 @@ const InstructorDashboard = () => {
 
   const fetchInstructorData = async () => {
     try {
-      const token = localStorage.getItem("token")
+      const token = await user.getIdToken(true)
       const [statsRes, coursesRes] = await Promise.all([
         axios.get("http://localhost:5000/api/instructor/stats", {
           headers: { Authorization: `Bearer ${token}` },
@@ -46,7 +46,12 @@ const InstructorDashboard = () => {
         }),
       ])
 
-      setStats(statsRes.data)
+      const safeStats = {
+        ...statsRes.data,
+        avgRating: Number(statsRes.data.avgRating) || 0,
+      }
+
+      setStats(safeStats)
       setCourses(coursesRes.data)
     } catch (error) {
       console.error("Error fetching instructor data:", error)
@@ -57,14 +62,20 @@ const InstructorDashboard = () => {
 
   const handleCourseAction = async (courseId, action) => {
     try {
-      const token = localStorage.getItem("token")
-      await axios.post(
-        `http://localhost:5000/api/instructor/courses/${courseId}/${action}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } },
-      )
+      const token = await user.getIdToken(true)
 
-      // Refresh courses
+      if (action === "submit") {
+        await axios.post(
+          `http://localhost:5000/api/instructor/courses/${courseId}/submit`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } },
+        )
+      } else if (action === "delete") {
+        await axios.delete(`http://localhost:5000/api/instructor/courses/${courseId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+      }
+
       fetchInstructorData()
     } catch (error) {
       console.error(`Error ${action} course:`, error)
@@ -79,6 +90,8 @@ const InstructorDashboard = () => {
         return "bg-yellow-100 text-yellow-800"
       case "rejected":
         return "bg-red-100 text-red-800"
+      case "draft":
+        return "bg-gray-100 text-gray-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -136,7 +149,7 @@ const InstructorDashboard = () => {
             { icon: BookOpen, label: "My Courses", value: stats.totalCourses, color: "blue" },
             { icon: Users, label: "Total Students", value: stats.totalStudents, color: "green" },
             { icon: TrendingUp, label: "Revenue", value: `৳${stats.totalRevenue}`, color: "purple" },
-            { icon: TrendingUp, label: "Avg Rating", value: stats.avgRating.toFixed(1), color: "orange" },
+            { icon: TrendingUp, label: "Avg Rating", value: Number(stats.avgRating).toFixed(1), color: "orange" },
           ].map((stat, index) => (
             <motion.div
               key={index}
@@ -171,35 +184,25 @@ const InstructorDashboard = () => {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                    Course
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                    Students
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                    Revenue
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Students</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {courses.map((course) => (
-                  <tr key={course.course_id} className="hover:bg-gray-50">
+                  <tr key={course.CourseID} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <img
-                          src={course.image_url || "/placeholder.svg?height=50&width=80"}
-                          alt={course.title}
+                          src={course.ImageURL || "/placeholder.svg"}
+                          alt={course.Title}
                           className="w-12 h-8 object-cover rounded"
                         />
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{course.title}</div>
+                          <div className="text-sm font-medium text-gray-900">{course.Title}</div>
                           <div className="text-sm text-gray-500">৳{course.price}</div>
                         </div>
                       </div>
@@ -212,37 +215,41 @@ const InstructorDashboard = () => {
                         {course.approval_status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.enrolled_count || 0}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">৳{course.revenue || 0}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {course.enrollment_count || 0}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ৳{course.revenue || 0}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center gap-2">
                         <Link
-                          to={`/instructor/course/${course.course_id}`}
-                          className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition"
-                          title="View Course"
+                          to={`/course/${course.CourseID}`}
+                          className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"
+                          title="View"
                         >
                           <Eye className="w-4 h-4" />
                         </Link>
                         <Link
-                          to={`/instructor/course/${course.course_id}/edit`}
-                          className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition"
-                          title="Edit Course"
+                          to={`/instructor/course/${course.CourseID}/edit`}
+                          className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200"
+                          title="Edit"
                         >
                           <Edit className="w-4 h-4" />
                         </Link>
                         {course.approval_status === "draft" && (
                           <button
-                            onClick={() => handleCourseAction(course.course_id, "submit")}
-                            className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition"
+                            onClick={() => handleCourseAction(course.CourseID, "submit")}
+                            className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200"
                             title="Submit for Approval"
                           >
                             <CheckCircle className="w-4 h-4" />
                           </button>
                         )}
                         <button
-                          onClick={() => handleCourseAction(course.course_id, "delete")}
-                          className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition"
-                          title="Delete Course"
+                          onClick={() => handleCourseAction(course.CourseID, "delete")}
+                          className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                          title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -261,7 +268,7 @@ const InstructorDashboard = () => {
               <p className="text-gray-500 mb-6">Create your first course to get started.</p>
               <Link
                 to="/instructor/create-course"
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
               >
                 Create Course
               </Link>
